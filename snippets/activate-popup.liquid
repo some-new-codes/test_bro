@@ -1,0 +1,43 @@
+<script>
+  const res = fetch('https://app.zalify.com/api/popup?app_key={{ shop.permanent_domain | remove: '.myshopify.com' }}')
+  .then((res) => res.json())
+  .then((data) => {
+    const plan = data && data.data && data.data.workspace && data.data.workspace.plan;
+
+    if (plan) {
+      document.documentElement.dispatchEvent(
+        new CustomEvent("zalify:plan", {
+          bubbles: true,
+          detail: { type: plan.type }
+        }),
+      );
+    }
+
+    if (!plan || plan.type === 'FREE') {
+      document.getElementById('activate-popup').style.display = 'block'
+    } else {
+      if (Shopify.designMode) {
+        const initCrisp = () => {
+          if (!window.$crisp) {
+            window.$crisp = [];
+            window.CRISP_WEBSITE_ID = data.data.crispWebsiteId;
+
+            const script = document.createElement("script");
+            script.src = "https://client.crisp.chat/l.js";
+            script.async = true;
+            document.getElementsByTagName("head")[0].appendChild(script);
+            window.$crisp.push([
+              "set",
+              "session:data",
+              [
+                "workspace_slug", `shopify-{{ shop.permanent_domain | remove: '.myshopify.com' }}`
+              ]
+            ]);
+          }
+        };
+        initCrisp();
+      }
+    }
+  })
+</script>
+
